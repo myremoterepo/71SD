@@ -5,7 +5,7 @@
 
 2 key文件，全名/home/fzf/key
 
-##操作
+## 操作
 1 adb push /home/fzf/key /data/local/tmp/ 将key推到电视果
 
 2 adb root

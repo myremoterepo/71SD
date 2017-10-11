@@ -1,7 +1,9 @@
-#编译电视果
+# 编译电视果
 
 ## 需要
-###设置android环境变量
+
+### 设置android环境变量
+
 1 动态设置android环境变量,每次关闭终端后重新设置
 
 export ANDROID_HOME=~/android-sdk-linux
@@ -14,7 +16,7 @@ export PATH=$ANDROID_HOME/platform-tools:$PATH
 * 在文档最后加入export PATH="$PATH:/home/fzf/androiddevtools/adt-bundle-linux-x86_64-20140702/sdk/tools"
 * 重启系统使生效
 
-###脚本
+### 脚本
 ant build脚本和apk签名脚本
 
 ## 操作
