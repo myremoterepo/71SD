@@ -48,6 +48,9 @@ queueThread没有死掉，一直在运行，是frameQueue出问题了
 
 Netty是一个NIO客户端服务器框架，可以快捷开发一个客户端或服务器网络应用。
 
+ChannelHandlerContext可以用来获取pipeline中的handler,使用对应的string key
+
+
 ## MediaCodec
 
 MediaCodec class can be used to access low-level media codecs, i.e. encoder/decoder components. 
@@ -130,3 +133,85 @@ debug占用:
 2 开启
 内存占用17.16M
 延迟时间40ms
+
+
+镜像,画面延迟的时间,需要计算网络延迟时间,时钟同步,画面的延时时间
+计算网络延迟
+
+周报-2017.10.27
+
+本周工作总结
+
+1 遗留的问题TVGUOBUG-2592和TVGUOBUG-2433的分析,照片拉长问题在改分辨率的时候已经解决;密听关闭造成crash的问题无法重现.
+2 调研AirPlay镜像运行时log输出对画面延时的影响,发现有log打印比没有log打印的延迟时间大22ms.尝试对这部分log做动态控制.
+    数据:
+    
+    没有log,直接注释掉代码          有log                           优化后
+    次数	延迟时间				序号	延迟时间				序号	延迟时间
+    1	        0.18				1	        0.18				1	        0.16
+    2	        0.19				2	        0.19				2	        0.19
+    3	        0.16				3	        0.19				3	        0.18
+    4	        0.14				4	        0.18				4	        0.13
+    5	        0.14				5	        0.16				5	        0.13
+    6	        0.14				6	        0.17				6	        0.15
+    7	        0.15				7	        0.14				7	        0.15
+    8	        0.13				8	        0.19				8	        0.14
+    9	        0.13				9	        0.16				9	        0.16
+    10	        0.18				10	        0.2				    10	        0.17
+    均值	    0.154				均值	    0.176				均值        0.156
+
+    优化后可以提升20ms的画面延时.
+    
+3 Android投屏时网络延时/时钟同步/画面延时等数据的计算,已经完成网络延时的计算,下一步调研始终同步和画面延时的计算.
+
+
+
+下周工作计划:
+1 Android投屏时的始终同步/画面延时计算.
+2 熟悉Proxy Server模块代码逻辑.
+
+
+## 字节数组
+编码解码
+LTV-length tag value
+
+一个字节8位,可表示一位十六进制数字.
+        
+        byte a = (byte) 0x1;
+
+## 镜像投屏的画面延时调研
+Android投屏时网络耗时/时钟同步/画面延时等数据的计算,已经完成网络延时的计算,下一步调研始终同步和画面延时的计算.
+
+公式:画面延迟时间=接收时间-时钟差值-发送时间-网络耗时
+
+网络往返时间,时钟差值都计算出来,最后异步计算画面延迟遇到一个问题,
+
+发送时间放在消息的header中未使用的部分中,但是header部分在视频解码前就被丢弃了,导致发送时间无法到达视频解码后数据入队的那一刻.
+
+现在是将网络耗时的单次和20次均值作为log打印出来了,之后调研如何计算出画面延时.
+
+## 本地投屏
+
+VideoModule-proxyOfflineQsvIfNeed中启动Proxy-ProxyChannel
+write(HttpResponse)
+
+ProxyRequestHandler-channelOpen中启动RemoteChannel
+ProxyRequestHandler-接收播放器的文件下载请求,是否有缓存 ? 读取缓存, write(response) : 通过RemoteChannel请求数据, outboundChannel.write(request);
+
+RemoteResponseHandler-接收remote的数据,写到缓存,并且通过mInboundChannel(ProxyChannel).write(response);返回响应到播放器
+
+VideoModule-onMediaPlayed中启动DownloadChannel
+writeFile(buffer)
+
+##
+
+本周工作总结:
+
+1 镜像投屏的画面延时调研,公式:画面延迟时间=接收时间-时钟差值-发送时间-网络耗时
+  结论:网络往返时间,时钟差值都计算出来,最后异步计算画面延迟遇到一个问题,发送时间放在消息的header中未使用的部分中,但是header部分在视频解码前就被丢弃了,导致发送时间无法到达视频解码后数据入队的那一刻.现在是将网络耗时的单次和20次均值作为log打印出来了,之后调研如何计算出画面延时.
+2 dlna-sdk增加pcab字段
+3 熟悉Proxy Server模块代码逻辑.
+
+下周工作计划:
+
+1 Proxy Server模块

@@ -16,3 +16,9 @@
 ## 流程
 
 服务启动后，信道开启，开始监听messageReceived的触发，当接收到视频流时触发播放。
+
+## 镜像数据流
+
+* 首先是MirrorFrameDecoder,将数据的整合成MirrorPack(去掉header,将header携带的信息放到payloadLen和payloadType,将data放到payload中);
+* 之后数据流入MirrorDataDecryptor,根据payloadType,将数据分类处理:给MirrorH264FrameDecoder;心跳包处理;其他处理
+* 最后,视频数据流入MirrorH264FrameDecoder中,接收到的数据只有payload了,解码
