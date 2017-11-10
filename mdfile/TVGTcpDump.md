@@ -47,7 +47,9 @@ sudo apt-get install wireshark
 * tcp.port==23 || tcp.port==21 文本管理流量（Telnet或FTP）
 * smtp||pop||imap 文本email流量
 
-### TCP端口
- 有65535个端口可供使用,
- 1~1023时标准端口组,一些特定服务使用
- 1024~65535临时端口组
+## 抓包方式,可借用的第三方
+手机要root,手机要支持tcpdump.
+但是一般root手机也是不支持文件copy的,也就是tcpdump没法push到/system/usr/bin目录下,(个别手机上是可以的)
+
+用GT,腾讯出的测试工具
+http://gt.tencent.com/
