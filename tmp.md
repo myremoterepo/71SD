@@ -137,3 +137,78 @@ QimoCallbackListener-自定义的奇摩业务接口
 DLNACallbackListener-标准DLNA的业务接口
 QPlayCallbackListener-qq音乐的业务接口
 AvTransportListener-标准DLNA的业务接口
+
+
+# 本地播放视频，seek到很大的位置，电视过开播很慢。
+
+        12-14 15:23:18.298 I/[ProxyServer] DownloadResponseHandler( 9798): httpChunkReceived contentLength=8192
+        12-14 15:23:18.298 I/[ProxyServer] DownloadResponseHandler( 9798): Content not cached.
+        12-14 15:23:18.298 I/[ProxyServer] CacheBlockList( 9798): start write....8665987
+        12-14 15:23:18.298 I/[ProxyServer] CacheBlockList( 9798): end write....8665987
+        12-14 15:23:18.298 I/[ProxyServer] RemoteResponseHandler( 9798): HttpChunk len=4344
+        12-14 15:23:18.298 I/[ProxyServer] DownloadResponseHandler( 9798): httpChunkReceived contentLength=3392
+        12-14 15:23:18.298 I/[ProxyServer] CacheBlockList( 9798): start write....8665987
+        
+        12-14 15:23:52.408 I/[ProxyServer] CacheBlockList( 9798): end write....1340795581
+        12-14 15:23:52.408 I/[ProxyServer] DownloadResponseHandler( 9798): Content not cached.
+        12-14 15:23:52.408 I/[ProxyServer] CacheBlockList( 9798): start write....1340795581
+        12-14 15:23:52.408 I/[ProxyServer] CacheBlockList( 9798): end write....1340795581
+
+卡在了mFile.write(content)方法上，RandomAccessFile的写入操作，一直没有写成功。
+
+1 将DownloadChannel的逻辑注掉，问题还在，说明与同步无关。
+2 如果写到一个每次都新new的文件中，没有问题，说明接收的内容无关，与文件操作有关,之后抓包分析后也确认了返回没有问题。
+3 把mFile.write(content)之前的mFile.seek(start)注掉，没有问题,说明与RandomAccessFile的seek操作有关。
+4 写demo，开两个线程执行mFile.seek(start) mFile.write(content)，没有出现问题，耗时几/几十毫秒，说明通常情况下先seek再write并不会卡住很久。
+5 用FileChannel方式写文件，问题还在，卡在map(FileChannel.MapMode.READ_WRITE, start, content);
+6 用单独线程执行mFile.write(content)，问题还在，卡在enqueue的锁上，因为runnable里面的mFile.write(content)会卡住，占着锁。
+7 在startSeek和endSeek关闭和打开文件写操作，问题还在，说明是seek结束之后的行为产生的问题。
+
+Proxy模块的总结
+
+最后得到了结果。
+接到结果的依据是3代可以播放而4代播放有问题，我对设置缓存路的代码印象还蛮深的，知道一个是/cache目录，另一个是/sdcard目录。
+改变缓存目录后，就不会再卡顿了。
+这跟/sdcard的文件格式有关系，cache是linux系统文件格式ext，而sdcard是windows支持的fat32格式， ext文件文件读写快过fat32。
+
+# Jmdns
+https://github.com/jmdns/jmdns/issues/96
+加log 打印serviceinfo的内容
+service name ip 唯一性。
+
+JmDNS 名字自动加1
+
+1 git上源码issues里面的相似问题，有一个检查service name和ip唯一的解决思路，但是没有验证。
+2 读注解，看到在执行registerService方法时能会更改名字。简单的注释掉更改名字的逻辑会不会有其他问题，要验证？
+3 DNS 与一个interface绑定？有一个DNS Cache存放映射信息。
+
+# Platium编译和运行
+
+1 platium sdk下载[URL](https://sourceforge.net/projects/platinum/?source=typ_redirect),有两个文件Neptune和Platium，都需要。Neptune在后面编译so文件时需要。 
+2 下载ndk，配置环境变量ANDROID_NDK_ROOT，ndk的安装目录
+3 编辑vim Build/Targets/arm-android-linux/Config.scons，修改ANDROID_TOOLCHAIN的版本号，和ndk的toolchain版本号要对应上。另外要在
+```
+ANDROID_HOST_SYSTEM = linux-x86
+ANDROID_TOOLCHAIN   = arm-linux-androideabi-4.4.3
+ANDROID_PLATFORM    = android-9
+ANDROID_ARCH        = arm
+```
+再加一行
+```
+ANDROID_HOST_SYSTEM = 'linux-x86_64'
+```
+不然会报错 找不到arm-linux-androideabi++
+4 scons target=arm-android-linux build_config=Release
+5 cd Platinum/Source/Platform/Android/module/platinum/jni
+  ndk-build NDK_DEBUG=0
+6 Platinum\Source\Platform\Android 目录下的两个工程导入 Eclipse
+7 将编译生成的so手动copy到module工程libs/armeabi/目录下
+8 参考文章[1](http://blog.csdn.net/zhbpd/article/details/50299961)
+  [2](http://blog.csdn.net/lancees/article/details/8789678)
+  
+# android gradle:
+
+compile & provide
+
+compile 将内容打包到apk内
+provide 编译时使用，但是不会打包到apk中

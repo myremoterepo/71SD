@@ -1,9 +1,44 @@
+bin/
+gen/
+# Eclipse
+.project
+.classpath
+.settings
+.checkstyle
+.property
+# IntelliJ IDEA
+.idea
 *.iml
+*.ipr
+*.iws
+classes
+gen-external-apklibs
+
+# Gradle
 .gradle
-/local.properties
-/.idea/workspace.xml
-/.idea/libraries
+build
+out/
+
+# Maven
+target
+release.properties
+pom.xml.*
+
+# Ant
+bin
+gen
+build.xml
+ant.properties
+local.properties
+project.properties
+proguard.cfg
+proguard-project.txt
+build.xml~
+local.properties~
+make_multiscreen.sh
+make_multiscreen.sh~
+
+# Other
 .DS_Store
-/build
-/captures
-.externalNativeBuild
+tmp
+
