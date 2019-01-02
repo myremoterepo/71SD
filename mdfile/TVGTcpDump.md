@@ -53,3 +53,10 @@ sudo apt-get install wireshark
 
 用GT,腾讯出的测试工具
 http://gt.tencent.com/
+
+本周工作总结:
+1 熟悉smartconfig模块,验证蓝牙配置30+位Wifi密码无响应问题;
+2 优化proxy server,提升开播速度.目前有一定的提升,理论上可以更快,代码并行控制还需要分析优化.
+3 分析第三方dlna投屏问题.
+腾讯切换VIP剧集没有继续播放问题,原因是切换后再没有收到SoapRequest消息,ServerThread一直等待接收.
+音量调节连续增加问题,原因是在按物理音量键时收到了100的volume值,并不是执行了多次音量调整.
