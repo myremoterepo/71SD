@@ -1,0 +1,12 @@
+# RTSP
+实时流协议，流媒体控制协议。RTSP基于TCP协议。
+
+控制命令：
+SETUP rtsp://.... RTSP/1.0
+PLAY rtsp://... RTSP/1.0
+PAUSE rtsp://... RTSP/1.0
+AUNNOUNCE
+RECORD
+TEARDOWN
+GET_PARAMETER
+SET_PARAMETER
